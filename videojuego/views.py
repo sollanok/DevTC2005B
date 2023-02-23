@@ -6,12 +6,14 @@ from django.views.decorators.csrf import csrf_exempt
 # importar json
 from json import loads, dumps
 
+# Creación de clase Fracción
 class Fraccion:
-    def __init__(self, num, den):
-        self.num = num
-        self.den = den
+    def __init__(self, numerador, denominador):
+        self.numerador = numerador
+        self.denominador = denominador
+
     def toJSON(self):
-        return dumps(self, default=lambda o:o.__dict__, sort_keys=False, indent=4)
+        return dumps(self, default = lambda o:o.__dict__, sort_keys = False, indent = 4)
 
 # Create your views here.
 def index(request):
@@ -27,23 +29,87 @@ def datos(request):
     jugadores = Reto.objects.all()
     return render(request, 'datos.html', {'lista_jugadores':jugadores})
 
-# http://127.0.0.1:8000/multiplicacion?p=10.3&q=20
-def multiplicacion(request):
-    p = request.GET['p']
-    q = request.GET['q']
-    r = float(p) * float(q)
-    return HttpResponse("Multiplicación: " + p + " x " + q + " = " + str(r))
+# Creación de calculadora de fracciones
+@csrf_exempt
+def suma(request):
+    body_unicode = request.body.decode('utf-8')
+    body = loads(body_unicode)
+    numerador1 = body['numerador1']
+    denominador1 = body['denominador1']
+    numerador2 = body['numerador2']
+    denominador2 = body['denominador2']
 
-# serialization: mandar un objeto por medio de la red, generar un json con dump
-# deserialization: traducir la info que está en el json con load
-# @ se llama anotación
+    # Proceso de suma
+    # Denominadores iguales
+    if denominador1 == denominador2:
+        resultadoNum = numerador1 + numerador2
+        resultado = Fraccion(resultadoNum, denominador1)
+    # Denominadores diferentes
+    else:
+        resultadoDen = denominador1 * denominador2
+        resultadoNum = (resultadoDen * numerador1 / denominador1) + (resultadoDen * numerador2 / denominador2)
+        resultado = Fraccion(int(resultadoNum), resultadoDen)
+
+    json_resultado = resultado.toJSON()
+    return HttpResponse(json_resultado, \
+                        content_type = "text/json-comment-filtered")
+
+@csrf_exempt
+def resta(request):
+    body_unicode = request.body.decode('utf-8')
+    body = loads(body_unicode)
+    numerador1 = body['numerador1']
+    denominador1 = body['denominador1']
+    numerador2 = body['numerador2']
+    denominador2 = body['denominador2']
+
+    # Proceso de resta
+    # Denominadores iguales
+    if denominador1 == denominador2:
+        resultadoNum = numerador1 - numerador2
+        resultado = Fraccion(resultadoNum, denominador1)
+    # Denominadores diferentes
+    else:
+        resultadoDen = denominador1 * denominador2
+        resultadoNum = (resultadoDen * numerador1 / denominador1) - (resultadoDen * numerador2 / denominador2)
+        resultado = Fraccion(int(resultadoNum), resultadoDen)
+
+    json_resultado = resultado.toJSON()
+    return HttpResponse(json_resultado, \
+                        content_type = "text/json-comment-filtered")
+
+@csrf_exempt
+def multiplicacion(request):
+    body_unicode = request.body.decode('utf-8')
+    body = loads(body_unicode)
+    numerador1 = body['numerador1']
+    denominador1 = body['denominador1']
+    numerador2 = body['numerador2']
+    denominador2 = body['denominador2']
+
+    # Proceso de multiplicación
+    resultadoNum = numerador1 * numerador2
+    resultadoDen = denominador1 * denominador2
+    resultado = Fraccion(resultadoNum, resultadoDen)
+
+    json_resultado = resultado.toJSON()
+    return HttpResponse(json_resultado, \
+                        content_type = "text/json-comment-filtered")
+
 @csrf_exempt
 def division(request):
     body_unicode = request.body.decode('utf-8')
     body = loads(body_unicode)
-    p = body['p']
-    q = body['q']
-    resultado = Fraccion(p,q)
+    numerador1 = body['numerador1']
+    denominador1 = body['denominador1']
+    numerador2 = body['numerador2']
+    denominador2 = body['denominador2']
+
+    # Proceso de división
+    resultadoNum = numerador1 * denominador2
+    resultadoDen = denominador1 * numerador1
+    resultado = Fraccion(resultadoNum, resultadoDen)
+
     json_resultado = resultado.toJSON()
     return HttpResponse(json_resultado, \
-        content_type = "text/json-comment-filtered")
+                        content_type = "text/json-comment-filtered")
